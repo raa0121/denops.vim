@@ -34,6 +34,7 @@ async function withDenops(
   });
   const proc = run(mode, {
     commands: [
+      "let g:denops#test = 1",
       `set runtimepath^=${DENOPS_PATH}`,
       `autocmd User DenopsReady call denops#plugin#register('denops-std-test', '${scriptPath}')`,
       "call denops#server#start()",

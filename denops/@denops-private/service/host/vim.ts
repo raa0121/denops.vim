@@ -1,6 +1,8 @@
-import { VimMessage, VimSession } from "../deps.ts";
+import { VimMessage, VimSession, Cache } from "../deps.ts";
 import { Invoker, isInvokerMethod } from "./invoker.ts";
 import { Host } from "./base.ts";
+
+const cache = new Cache<string, boolean>(1000);
 
 export class Vim implements Host {
   #session: VimSession;
@@ -12,11 +14,47 @@ export class Vim implements Host {
     this.#session = new VimSession(reader, writer);
   }
 
-  async call(func: string, ...args: unknown[]): Promise<unknown> {
-    const result = await this.#session.call(func, ...args);
-    // Make sure that everything is up to date after the command
-    await this.#session.redraw();
-    return result;
+  private async isTest(): Promise<boolean> {
+    if (!cache.has("isTest")) {
+      const isTest = await this.#session.expr("g:denops#test") as number
+      cache.set("isTest", isTest !== 0);
+    }
+    return cache.get("isTest");
+  }
+
+  private async isDebug(): Promise<boolean> {
+    if (!cache.has("isDebug")) {
+      const isDebug = await this.#session.expr("g:denops#debug") as number
+      cache.set("isDebug", isDebug !== 0);
+    }
+    return cache.get("isDebug");
+  }
+
+  private async wrapCall(fn: string, ...args: unknown[]): Promise<unknown> {
+    await this.#session.call("denops#api#context", 'denops_vim_call', {
+      fn,
+      args,
+    });
+    await this.#session.ex(`let v:errmsg = ''`);
+    await this.#session.ex(`let g:denops_vim_call.ret = call(g:denops_vim_call.fn, g:denops_vim_call.args)`);
+    const [ret, err] = await this.#session.expr('[g:denops_vim_call.ret, v:errmsg]') as [unknown, string];
+    if (err !== "") {
+      throw new Error(err);
+    }
+    return ret;
+  }
+
+  async call(fn: string, ...args: unknown[]): Promise<unknown> {
+    try {
+      if (await this.isDebug() || await this.isTest()) {
+        return await this.wrapCall(fn, ...args);
+      } else {
+        return await this.#session.call(fn, ...args);
+      }
+    } finally {
+      // Make sure that everything is up to date after the command
+      await this.#session.redraw();
+    }
   }
 
   register(invoker: Invoker): void {

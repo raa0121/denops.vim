@@ -14,3 +14,5 @@ export * from "https://deno.land/x/unknownutil@v0.1.1/mod.ts";
 
 export { using } from "https://deno.land/x/disposable@v0.2.0/mod.ts";
 export type { Disposable } from "https://deno.land/x/disposable@v0.2.0/mod.ts";
+
+export { Cache } from "https://deno.land/x/local_cache@1.0/mod.ts";
