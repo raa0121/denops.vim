@@ -1,4 +1,4 @@
-import { assertEquals } from "./deps_test.ts";
+import { assertEquals, assertThrowsAsync } from "./deps_test.ts";
 import { test } from "./test/tester.ts";
 
 test({
@@ -9,6 +9,16 @@ test({
       await denops.call("range", 10),
       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
     );
+  },
+});
+
+test({
+  mode: "all",
+  name: "denops.call() calls a Vim/Neovim function and throw an error",
+  fn: async (denops) => {
+    await assertThrowsAsync(async () => {
+      console.log(await denops.call("no-such-function"));
+    }, undefined, "E117: Unknown function: no-such-function");
   },
 });
 

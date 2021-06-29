@@ -12,11 +12,22 @@ export class Vim implements Host {
     this.#session = new VimSession(reader, writer);
   }
 
-  async call(func: string, ...args: unknown[]): Promise<unknown> {
-    const result = await this.#session.call(func, ...args);
-    // Make sure that everything is up to date after the command
-    await this.#session.redraw();
-    return result;
+  private async wrapCall(fn: string, ...args: unknown[]): Promise<unknown> {
+    // NOTE: https://github.com/vim/vim/pull/8477
+    const [ret, err] = await this.#session.call('denops#api#call', fn, args) as [unknown, string];
+    if (err !== "") {
+      throw new Error(err);
+    }
+    return ret;
+  }
+
+  async call(fn: string, ...args: unknown[]): Promise<unknown> {
+    try {
+      return await this.wrapCall(fn, ...args);
+    } finally {
+      // Make sure that everything is up to date after the command
+      await this.#session.redraw();
+    }
   }
 
   register(invoker: Invoker): void {
