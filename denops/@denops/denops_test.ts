@@ -13,6 +13,7 @@ test({
 });
 
 test({
+  ignore: true, // Need: https://github.com/vim/vim/pull/8477
   mode: "all",
   name: "denops.call() calls a Vim/Neovim function and throw an error",
   fn: async (denops) => {
@@ -61,6 +62,7 @@ test({
 });
 
 test({
+  ignore: true, // Need: https://github.com/vim/vim/pull/8477
   mode: "all",
   name: "denops.batch() calls multiple Vim/Neovim functions and return results and error",
   fn: async (denops) => {
