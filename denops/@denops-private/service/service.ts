@@ -1,6 +1,8 @@
 import {
   ensureArray,
   ensureString,
+  isArray,
+  isString,
   Session,
   WorkerReader,
   WorkerWriter,
@@ -48,6 +50,13 @@ export class Service {
         return await this.call(fn, ...args);
       },
 
+      batch: async (...calls) => {
+        const isCall = (call: unknown): call is [string, ...unknown[]] =>
+          isArray(call) && call.length > 0 && isString(call[0]);
+        ensureArray(calls, isCall);
+        return await this.batch(...calls);
+      },
+
       dispatch: async (name, fn, ...args) => {
         ensureString(name);
         ensureString(fn);
@@ -63,6 +72,10 @@ export class Service {
 
   async call(fn: string, ...args: unknown[]): Promise<unknown> {
     return await this.#host.call(fn, ...args);
+  }
+
+  async batch(...calls: [string, ...unknown[]][]): Promise<[unknown[], unknown]> {
+    return await this.#host.batch(...calls);
   }
 
   async dispatch(name: string, fn: string, args: unknown[]): Promise<unknown> {

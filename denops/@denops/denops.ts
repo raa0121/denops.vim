@@ -39,6 +39,15 @@ export class Denops {
   }
 
   /**
+   * Batch call arbitrary functions of Vim/Neovim and return the results and error.
+   *
+   * @param calls: A list of tuple ([fn, args]) to call Vim/Neovim functions.
+   */
+  async batch(...calls: [string, ...unknown[]][]): Promise<[unknown[], string]> {
+    return await this.#session.call("batch", ...calls) as [unknown[], string];
+  }
+
+  /**
    * Execute an arbitrary command of Vim/Neovim under a given context.
    *
    * @param cmd: A command expression to be executed.

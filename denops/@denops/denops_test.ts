@@ -1,4 +1,4 @@
-import { assertEquals, assertThrowsAsync } from "./deps_test.ts";
+import { assertMatch, assertEquals, assertThrowsAsync } from "./deps_test.ts";
 import { test } from "./test/tester.ts";
 
 test({
@@ -47,5 +47,25 @@ test({
       await denops.eval("g:denops_test") as string,
       "Hello World",
     );
+  },
+});
+
+test({
+  mode: "all",
+  name: "denops.batch() calls multiple Vim/Neovim functions and return results",
+  fn: async (denops) => {
+    const [rs, emsg] = await denops.batch(["range", 1], ["range", 2], ["range", 3]);
+    assertEquals(rs, [[0], [0,1], [0,1,2]]);
+    assertEquals(emsg, "");
+  },
+});
+
+test({
+  mode: "all",
+  name: "denops.batch() calls multiple Vim/Neovim functions and return results and error",
+  fn: async (denops) => {
+    const [rs, emsg] = await denops.batch(["range", 1], ["no-such-function", 2], ["range", 3]);
+    assertEquals(rs, [[0]]);
+    assertMatch(emsg, /E117: Unknown function: no-such-function/);
   },
 });

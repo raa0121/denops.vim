@@ -30,6 +30,22 @@ export class Vim implements Host {
     }
   }
 
+  async batch(...calls: [string, ...unknown[]][]): Promise<[unknown[], string]> {
+    const results = [];
+    for (const [fn, ...args] of calls) {
+      try {
+        results.push(await this.wrapCall(fn, ...args));
+      } catch (e) {
+        // Make sure that everything is up to date after the command
+        await this.#session.redraw();
+        return [results, e.toString()];
+      }
+    }
+    // Make sure that everything is up to date after the command
+    await this.#session.redraw();
+    return [results, ''];
+  }
+
   register(invoker: Invoker): void {
     this.#session.replaceCallback(async (message: VimMessage) => {
       const [msgid, expr] = message;
